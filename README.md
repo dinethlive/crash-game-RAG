@@ -372,10 +372,14 @@ window.__predict_destroy();
 
 ## 9. License
 
-This code is provided **as-is** for educational purposes. Use at your own risk.
+This project is licensed under the **MIT License** with additional restrictions:
+
+- **Personal Use Only** — Free for individual, non-commercial use
+- **No Commercial Use** — Prohibited from using for profit or business purposes
+- **Educational Purpose** — Intended for learning and research only
+
+See the full [LICENSE](LICENSE) file for complete terms.
 
 ---
 
 _Last Updated: March 17, 2026_
-
-_Generated for the crash-game-RAG project_
