@@ -1,4 +1,4 @@
-# 🧠 Crash Predict AI — Gemini-Powered Prediction
+# 🧠 Crash Predict AI - Powered by Gemini
 
 ![Crash Predict AI UI](screenshot/crash-predict-ai-ss-1.png)
 
