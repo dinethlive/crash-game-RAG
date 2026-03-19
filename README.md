@@ -65,84 +65,98 @@ Crash Predict AI is a **single-file, zero-dependency** browser userscript (~1,25
 
 ## Key Features
 
-```
-+---------------------------+     +---------------------------+     +---------------------------+
-|    REAL-TIME CAPTURE      |     |    INTELLIGENT STORAGE    |     |     AI PREDICTION         |
-+---------------------------+     +---------------------------+     +---------------------------+
-| - WebSocket/SignalR hook  |     | - IndexedDB vector store  |     | - Gemini 2.5 Flash LLM    |
-| - Automatic event parsing |     | - 9D feature vectors      |     | - Dynamic temperature     |
-| - Zero-latency intercept  |     | - Min-max normalization   |     | - Adaptive K neighbors    |
-| - Works on page load      |     | - Persistent across tabs  |     | - Confidence scoring      |
-+---------------------------+     +---------------------------+     +---------------------------+
+```mermaid
+graph LR
+    subgraph Capture ["Real-Time Capture"]
+        A1[WebSocket/SignalR Hook]
+        A2[Automatic Event Parsing]
+        A3[Zero-Latency Intercept]
+        A4[Works on Page Load]
+    end
 
-+---------------------------+     +---------------------------+     +---------------------------+
-|    SIMILARITY SEARCH      |     |   FEEDBACK LEARNING       |     |    RICH UI                |
-+---------------------------+     +---------------------------+     +---------------------------+
-| - Cosine similarity KNN   |     | - Reward/punish vectors   |     | - Draggable floating UI   |
-| - Reward-weighted scoring |     | - Accuracy tracking       |     | - Live multiplier display |
-| - Exponential time decay  |     | - Score clamping [0.1,100]|     | - Prediction confidence   |
-| - Adaptive threshold 0.85 |     | - Auto-learning per round |     | - Data export/import      |
-+---------------------------+     +---------------------------+     +---------------------------+
+    subgraph Storage ["Intelligent Storage"]
+        B1[IndexedDB Vector Store]
+        B2[9D Feature Vectors]
+        B3[Min-Max Normalization]
+        B4[Persistent Across Tabs]
+    end
+
+    subgraph Prediction ["AI Prediction"]
+        C1[Gemini 2.5 Flash LLM]
+        C2[Dynamic Temperature]
+        C3[Adaptive K Neighbors]
+        C4[Confidence Scoring]
+    end
+
+    subgraph Search ["Similarity Search"]
+        D1[Cosine Similarity KNN]
+        D2[Reward-Weighted Scoring]
+        D3[Exponential Time Decay]
+        D4[Adaptive Threshold 0.85]
+    end
+
+    subgraph Learning ["Feedback Learning"]
+        E1[Reward/Punish Vectors]
+        E2[Accuracy Tracking]
+        E3["Score Clamping [0.1, 100]"]
+        E4[Auto-Learning Per Round]
+    end
+
+    subgraph UI ["Rich UI"]
+        F1[Draggable Floating Panel]
+        F2[Live Multiplier Display]
+        F3[Prediction Confidence Bar]
+        F4[Data Export/Import]
+    end
+
+    Capture --> Storage --> Search --> Prediction --> UI --> Learning
+    Learning -.->|Updates Vectors| Storage
 ```
 
 ---
 
 ## System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                              CRASH PREDICT AI — SYSTEM ARCHITECTURE                 │
-│                                                                                     │
-│  ┌──────────────┐    ┌───────────────┐    ┌──────────────┐    ┌──────────────────┐  │
-│  │  CRASH GAME  │───>│  WS HOOK      │───>│  EVENT       │───>│  FEATURE         │  │
-│  │  SERVER      │    │  (SignalR)     │    │  HANDLER     │    │  EXTRACTOR       │  │
-│  │              │    │               │    │              │    │  (9D Vector)     │  │
-│  └──────────────┘    └───────────────┘    └──────┬───────┘    └────────┬─────────┘  │
-│                                                  │                     │             │
-│                                     OnCrash ─────┘         ┌──────────┘             │
-│                                                  │         │                        │
-│                                                  ▼         ▼                        │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐   │
-│  │                        INDEXEDDB VECTOR STORE                                │   │
-│  │                                                                              │   │
-│  │   ┌─────────┬──────────┬──────────┬───────────┬──────────┬──────────────┐   │   │
-│  │   │  id     │ features │  norm    │ crashVal  │ reward   │  timestamp   │   │   │
-│  │   ├─────────┼──────────┼──────────┼───────────┼──────────┼──────────────┤   │   │
-│  │   │  1      │ [9D raw] │ [9D 0-1] │  2.45    │  1.10    │  1711234567  │   │   │
-│  │   │  2      │ [9D raw] │ [9D 0-1] │  1.12    │  0.80    │  1711234590  │   │   │
-│  │   │  ...    │ ...      │ ...      │  ...     │  ...     │  ...         │   │   │
-│  │   └─────────┴──────────┴──────────┴───────────┴──────────┴──────────────┘   │   │
-│  └──────────────────────────────────────────────────────────────────────────────┘   │
-│                          │                                                          │
-│              OnBetting ──┘                                                          │
-│                          │                                                          │
-│                          ▼                                                          │
-│  ┌────────────────────────────┐    ┌─────────────────────────────────────────────┐  │
-│  │  KNN RETRIEVAL ENGINE      │    │  GEMINI 2.5 FLASH API                       │  │
-│  │                            │    │                                             │  │
-│  │  1. Query = last round     │───>│  Prompt:                                   │  │
-│  │  2. Cosine similarity      │    │   - Recent 15 crashes                      │  │
-│  │  3. × reward multiplier    │    │   - Streak states                          │  │
-│  │  4. × time decay           │    │   - All-time statistics                    │  │
-│  │  5. Adaptive K filtering   │    │   - Top-K similar rounds (KNN results)     │  │
-│  │                            │    │   - Analysis guidelines                    │  │
-│  └────────────────────────────┘    └──────────────────┬──────────────────────────┘  │
-│                                                       │                             │
-│                                                       ▼                             │
-│                                    ┌──────────────────────────────────┐              │
-│                                    │  PREDICTION OUTPUT               │              │
-│                                    │                                  │              │
-│                                    │  { prediction, confidence,      │              │
-│                                    │    advice, reasoning,           │              │
-│                                    │    suggestedCashout }           │              │
-│                                    └─────────────┬────────────────────┘              │
-│                                                  │                                  │
-│                                                  ▼                                  │
-│                              ┌────────────────────────────────────┐                  │
-│                              │  UI PANEL (Fixed Overlay)          │                  │
-│                              │  + Feedback Loop (reward/punish)   │                  │
-│                              └────────────────────────────────────┘                  │
-└─────────────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Input ["Data Ingestion"]
+        GS["Crash Game Server"] -->|WebSocket| WH["WS Hook\n(SignalR)"]
+        WH --> EH["Event Handler"]
+        EH --> FE["Feature Extractor\n(9D Vector)"]
+    end
+
+    subgraph VectorDB ["IndexedDB Vector Store"]
+        DB[("IndexedDB\ncrash-predict-db")]
+        DB --- Schema["id | features[9] | norm[9]\ncrashVal | rewardScore | timestamp"]
+    end
+
+    FE -->|"OnCrash: Store Round"| DB
+
+    subgraph Retrieval ["KNN Retrieval Engine"]
+        Q["Query = Last Round Features"] --> CS["Cosine Similarity"]
+        CS --> RW["× Reward Multiplier\nmax(0.5, log₁₀(10 + score))"]
+        RW --> TD["× Time Decay\nexp(-hours / 2)"]
+        TD --> AK["Adaptive K Filtering\nThreshold: 0.85"]
+    end
+
+    DB -->|"OnBetting: Query"| Q
+
+    subgraph Generation ["Gemini 2.5 Flash API"]
+        PR["Prompt Builder"] --> API["API Call\nDynamic Temperature"]
+        API --> PO["Prediction Output\n{prediction, confidence,\nadvice, reasoning,\nsuggestedCashout}"]
+    end
+
+    AK -->|"Top-K Similar Rounds"| PR
+    DB -->|"Recent 15 + Stats"| PR
+
+    PO --> UI["UI Panel\n(Fixed Overlay)"]
+    PO -->|"After Next Crash"| FL["Feedback Loop\nReward / Punish\nKNN Vectors"]
+    FL -->|"Update rewardScore"| DB
+
+    style Input fill:#1a1a2e,stroke:#a855f7,color:#e0e0e0
+    style VectorDB fill:#1a1a2e,stroke:#ff6d00,color:#e0e0e0
+    style Retrieval fill:#1a1a2e,stroke:#4cff4c,color:#e0e0e0
+    style Generation fill:#1a1a2e,stroke:#4285f4,color:#e0e0e0
 ```
 
 ---
@@ -151,22 +165,25 @@ Crash Predict AI is a **single-file, zero-dependency** browser userscript (~1,25
 
 The system operates as a **6-stage pipeline** that runs automatically on every game round:
 
-```
- ROUND N CRASHES                    BETTING PHASE (ROUND N+1)
- ═══════════════                    ════════════════════════════
+```mermaid
+flowchart LR
+    subgraph RoundN ["Round N Crashes"]
+        direction LR
+        EX["Extract\nFeatures (9D)"] --> ST["Store Vector\nin DB"]
+    end
 
- ┌─────────┐   ┌──────────┐        ┌─────────┐   ┌─────────┐   ┌──────────┐
- │ Extract  │──>│  Store   │        │  Query  │──>│  Build  │──>│ Generate │
- │ Features │   │  Vector  │        │  KNN    │   │ Prompt  │   │ via LLM  │
- │ (9D)     │   │  in DB   │        │ Top-K   │   │ + RAG   │   │ Gemini   │
- └─────────┘   └──────────┘        └─────────┘   └─────────┘   └────┬─────┘
-                     │                                               │
-                     │              ┌──────────────────────────────────┘
-                     │              ▼
-                     │         ┌──────────┐
-                     └────────>│ Feedback │ (after crash, reward/punish vectors)
-                               │ Loop     │
-                               └──────────┘
+    subgraph RoundN1 ["Betting Phase — Round N+1"]
+        direction LR
+        KNN["Query KNN\nTop-K"] --> BP["Build Prompt\n+ RAG Context"] --> GEN["Generate\nvia Gemini"]
+    end
+
+    ST -.->|"Feeds into"| KNN
+    GEN --> FB["Feedback Loop\n(after crash)"]
+    FB -.->|"Reward / Punish\nKNN Vectors"| ST
+
+    style RoundN fill:#0d1117,stroke:#ff6666,color:#e0e0e0
+    style RoundN1 fill:#0d1117,stroke:#4cff4c,color:#e0e0e0
+    style FB fill:#1a1a2e,stroke:#ffc800,color:#e0e0e0
 ```
 
 ### Stage 1: WebSocket Interception
@@ -208,26 +225,40 @@ Each completed round is transformed into a **9-dimensional feature vector** capt
 | `f7` | High Streak | consecutive rounds > 5.0x | 0 — 10 | Current hot streak depth |
 | `f8` | Tick Leak | `delta ≤ 5ms ? 1 : 0` | 0 or 1 | Suspiciously fast tick detected |
 
-**Why these features?**
+**Feature Importance Intuition:**
 
-```
-                    ┌─────────────────────────────────────────────────┐
-                    │        FEATURE IMPORTANCE INTUITION             │
-                    ├─────────────────────────────────────────────────┤
-                    │                                                 │
-   Crash Dynamics   │  f0 (crash value)  ████████████████████  Core  │
-                    │  f5 (duration)     ██████████████████    High  │
-                    │                                                 │
-   Latency Signals  │  f1 (avg delta)    ████████████████      High  │
-                    │  f2 (min delta)    ██████████████        Med   │
-                    │  f3 (std delta)    ████████████          Med   │
-                    │  f8 (tick leak)    ██████████            Med   │
-                    │                                                 │
-   Behavioral       │  f4 (cashout %)    ████████              Low   │
-                    │                                                 │
-   Contextual       │  f6 (low streak)   ██████████████        Med   │
-                    │  f7 (high streak)  ██████████████        Med   │
-                    └─────────────────────────────────────────────────┘
+```mermaid
+%%{init: {'theme': 'dark'} }%%
+block-beta
+    columns 3
+    block:CrashDynamics:3
+        columns 3
+        cd["Crash Dynamics"]:1
+        f0["f0 — crash value ⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛ Core"]:2
+    end
+    space:1
+    f5["f5 — duration ⬛⬛⬛⬛⬛⬛⬛⬛⬛ High"]:2
+    block:LatencySignals:3
+        columns 3
+        ls["Latency Signals"]:1
+        f1["f1 — avg delta ⬛⬛⬛⬛⬛⬛⬛⬛ High"]:2
+    end
+    space:1
+    f2["f2 — min delta ⬛⬛⬛⬛⬛⬛⬛ Med"]:2
+    space:1
+    f3["f3 — std delta ⬛⬛⬛⬛⬛⬛ Med"]:2
+    space:1
+    f8["f8 — tick leak ⬛⬛⬛⬛⬛ Med"]:2
+    block:Behavioral:3
+        columns 3
+        bh["Behavioral"]:1
+        f4["f4 — cashout ratio ⬛⬛⬛⬛ Low"]:2
+    end
+    block:Contextual:3
+        columns 3
+        ct["Contextual"]:1
+        f67["f6/f7 — streaks ⬛⬛⬛⬛⬛⬛⬛ Med"]:2
+    end
 ```
 
 ### Stage 3: Vector Storage (IndexedDB)
@@ -265,19 +296,17 @@ Index:    ts (non-unique)
 
 Each feature dimension is scaled to `[0, 1]` using fixed min-max ranges:
 
-```
-Dimension    [Min]  ════════════════════════════════  [Max]
-─────────────────────────────────────────────────────────────
-f0 ln(crash)  0.0   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   3.6
-f1 avgDelta   0     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   2000 ms
-f2 minDelta   0     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   1000 ms
-f3 stdDelta   0     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   800 ms
-f4 coRatio    0.0   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   1.0
-f5 duration   0     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   60000 ms
-f6 lowStreak  0     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   10
-f7 hiStreak   0     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   10
-f8 tickLeak   0     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   1
-```
+| Dimension | Min | Max | Unit |
+|:---|:---:|:---:|:---|
+| `f0` ln(crash) | 0.0 | 3.6 | — |
+| `f1` avgDelta | 0 | 2,000 | ms |
+| `f2` minDelta | 0 | 1,000 | ms |
+| `f3` stdDelta | 0 | 800 | ms |
+| `f4` cashoutRatio | 0.0 | 1.0 | ratio |
+| `f5` duration | 0 | 60,000 | ms |
+| `f6` lowStreak | 0 | 10 | count |
+| `f7` highStreak | 0 | 10 | count |
+| `f8` tickLeak | 0 | 1 | binary |
 
 ### Stage 4: KNN Similarity Retrieval
 
@@ -301,18 +330,31 @@ Where:
 
 **Adaptive K Filtering:**
 
-```
-                  ┌─────────────────────────────────────────────────┐
-                  │          ADAPTIVE K — THRESHOLD: 0.85           │
-                  │                                                 │
-   Case A:       │  Results:  0.95  0.92  0.88  0.72  0.51        │
-   (3 above)     │            ════  ════  ════                     │
-                  │  Output:   Top 3 high-confidence matches       │
-                  │                                                 │
-   Case B:       │  Results:  0.78  0.65  0.42  0.31  0.20        │
-   (0 above)     │            ════                                 │
-                  │  Output:   Single best match only              │
-                  └─────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    START["Top-K KNN Results"] --> CHECK{"Any result\nrawSim > 0.85?"}
+
+    CHECK -->|"Yes — Case A"| CASEA["Return ALL results above 0.85\n(high-confidence matches only)"]
+    CHECK -->|"No — Case B"| CASEB["Return SINGLE best match\n(avoid noisy context)"]
+
+    CASEA --> LLM["Feed to Gemini LLM"]
+    CASEB --> LLM
+
+    subgraph ExampleA ["Example: Case A"]
+        direction LR
+        R1["0.95 ✓"] ~~~ R2["0.92 ✓"] ~~~ R3["0.88 ✓"] ~~~ R4["0.72 ✗"] ~~~ R5["0.51 ✗"]
+    end
+
+    subgraph ExampleB ["Example: Case B"]
+        direction LR
+        S1["0.78 ✓"] ~~~ S2["0.65 ✗"] ~~~ S3["0.42 ✗"] ~~~ S4["0.31 ✗"] ~~~ S5["0.20 ✗"]
+    end
+
+    CASEA -.- ExampleA
+    CASEB -.- ExampleB
+
+    style CASEA fill:#1a3a1a,stroke:#4cff4c,color:#e0e0e0
+    style CASEB fill:#3a2a1a,stroke:#ffc800,color:#e0e0e0
 ```
 
 This prevents noisy low-similarity results from confusing the LLM.
@@ -323,49 +365,43 @@ The retrieved KNN context augments a structured prompt sent to Gemini 2.5 Flash 
 
 **Prompt Structure:**
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    PROMPT COMPOSITION                            │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  [1] System Role                                                │
-│      "You are a statistical analyst for a crash game..."        │
-│                                                                 │
-│  [2] Recent Crashes        ← Last 15 rounds (newest first)      │
-│      [2.45, 1.12, 3.20, 1.05, ...]                             │
-│                                                                 │
-│  [3] Current State         ← Live streak counters               │
-│      Low streak: 3 | High streak: 0                            │
-│                                                                 │
-│  [4] All-Time Statistics   ← Aggregate DB stats                 │
-│      Mean: 2.45x | Median: 1.85x | Range: 1.00-25.30x         │
-│                                                                 │
-│  [5] KNN Similar Rounds    ← Retrieved context (RAG)            │
-│      #1 [sim=0.923] crashed=2.35x avgΔ=450ms tickLeak=NO       │
-│      #2 [sim=0.891] crashed=1.85x avgΔ=320ms tickLeak=YES      │
-│      ...                                                        │
-│                                                                 │
-│  [6] Analysis Guidelines   ← Domain constraints                 │
-│      - Provably fair RNG disclaimer                             │
-│      - Mean-reversion tendencies                                │
-│      - Latency-crash correlations                               │
-│                                                                 │
-│  [7] Output Schema         ← Enforced JSON format               │
-│      { prediction, confidence, advice, reasoning, cashout }     │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Prompt ["Prompt Composition — Sent to Gemini"]
+        direction TB
+        P1["[1] System Role\n'You are a statistical analyst for a crash game...'"]
+        P2["[2] Recent Crashes — Last 15 rounds\n[2.45, 1.12, 3.20, 1.05, ...]"]
+        P3["[3] Current State — Live streak counters\nLow streak: 3 | High streak: 0"]
+        P4["[4] All-Time Statistics — Aggregate DB\nMean: 2.45x | Median: 1.85x | Range: 1.00–25.30x"]
+        P5["[5] KNN Similar Rounds — RAG Context\n#1 sim=0.923 crashed=2.35x avgΔ=450ms\n#2 sim=0.891 crashed=1.85x avgΔ=320ms"]
+        P6["[6] Analysis Guidelines — Domain Constraints\nRNG disclaimer • Mean reversion • Latency correlations"]
+        P7["[7] Output Schema — Enforced JSON\n{prediction, confidence, advice, reasoning, cashout}"]
+
+        P1 --> P2 --> P3 --> P4 --> P5 --> P6 --> P7
+    end
+
+    P7 --> OUT["Gemini 2.5 Flash\nJSON Response"]
+
+    style Prompt fill:#0d1117,stroke:#4285f4,color:#e0e0e0
+    style P5 fill:#1a2a1a,stroke:#4cff4c,color:#e0e0e0
+    style OUT fill:#1a1a2e,stroke:#a855f7,color:#e0e0e0
 ```
 
 **Dynamic Temperature Scaling:**
 
 The LLM temperature adapts to recent crash volatility:
 
-```
-  Temperature    Volatility (stdDev of last 15 crashes)
-  ──────────     ──────────────────────────────────────
-     0.2         stdDev < 1.0   ░░░░░░░░  Low volatility  → strict, deterministic
-     0.4         1.0 ≤ std ≤ 4  ▓▓▓▓▓▓▓▓  Normal          → balanced (default)
-     0.7         stdDev > 4.0   ████████  High volatility  → creative, exploratory
+```mermaid
+flowchart LR
+    SD["stdDev of\nlast 15 crashes"] --> C1{"stdDev < 1.0"}
+    C1 -->|Yes| T1["Temp = 0.2\nStrict & Deterministic"]
+    C1 -->|No| C2{"stdDev > 4.0"}
+    C2 -->|Yes| T3["Temp = 0.7\nCreative & Exploratory"]
+    C2 -->|No| T2["Temp = 0.4\nBalanced (Default)"]
+
+    style T1 fill:#1a1a3e,stroke:#4285f4,color:#e0e0e0
+    style T2 fill:#1a2a1a,stroke:#4cff4c,color:#e0e0e0
+    style T3 fill:#3a1a1a,stroke:#ff6666,color:#e0e0e0
 ```
 
 **API Configuration:**
@@ -404,28 +440,27 @@ After each crash, the system evaluates the previous prediction and **adjusts the
 
 **Reward/Penalty Matrix:**
 
-```
-  Scenario                                   Multiplier    Effect
-  ──────────────────────────────────────────  ──────────    ──────────────────
-  Missed instant 1.00x crash                   ×0.60       ████ HUGE penalty
-  Predicted higher than actual (busted)        ×0.80       ███  Heavy penalty
-  Gap > 1.0 (predicted way too low)            ×0.60       ████ HUGE penalty
-  Gap ≤ 0.8 (fair prediction)                  ×1.02       ▓    Small reward
-  Gap ≤ 0.4 (good prediction)                  ×1.05       ▓▓   Medium reward
-  Gap ≤ 0.2 (excellent prediction)             ×1.10       ▓▓▓  High reward
-```
+| Scenario | Multiplier | Effect |
+|:---|:---:|:---|
+| Missed instant 1.00x crash | `×0.60` | HUGE penalty |
+| Predicted higher than actual (busted) | `×0.80` | Heavy penalty |
+| Gap > 1.0 (predicted way too low) | `×0.60` | HUGE penalty |
+| Gap ≤ 0.8 (fair prediction) | `×1.02` | Small reward |
+| Gap ≤ 0.4 (good prediction) | `×1.05` | Medium reward |
+| Gap ≤ 0.2 (excellent prediction) | `×1.10` | High reward |
 
 **Reward Score Dynamics:**
 
-```
-  Score Range: [0.1 ─────────── 1.0 (baseline) ─────────── 100.0]
-                 ▲                    ▲                        ▲
-                 │                    │                        │
-            Heavily                 Fresh               Top-performing
-            punished               record               vector
-            vectors                                     (consistently
-            (rarely                                      accurate
-             retrieved)                                  context)
+```mermaid
+flowchart LR
+    subgraph ScoreRange ["Reward Score Range: 0.1 — 100.0"]
+        direction LR
+        LOW["0.1\nHeavily Punished\n(rarely retrieved)"] ---|"← Penalties"| BASE["1.0\nBaseline\n(fresh record)"] ---|"Rewards →"| HIGH["100.0\nTop Performer\n(consistently accurate)"]
+    end
+
+    style LOW fill:#3a1a1a,stroke:#ff4444,color:#e0e0e0
+    style BASE fill:#1a1a2e,stroke:#888,color:#e0e0e0
+    style HIGH fill:#1a3a1a,stroke:#4cff4c,color:#e0e0e0
 ```
 
 **Accuracy Tracking Rules:**
@@ -494,12 +529,22 @@ where t = elapsed time in milliseconds
 
 Gemini 2.5 Flash is a "thinking" model. The parser handles multiple edge cases:
 
-```
-Strategy 1: Skip thought parts (marked with thought:true), take last non-thought part
-Strategy 2: Fallback to any part with text content
-Strategy 3: Strip markdown code fences (```json ... ```)
-Strategy 4: Regex extract JSON object from prose ({ ... })
-Strategy 5: Return error object with parse failure message
+```mermaid
+flowchart TD
+    RAW["Raw API Response\n(parts[])"] --> S1{"Find last part\nwith thought:false?"}
+    S1 -->|Found| CLEAN["Clean text"]
+    S1 -->|Not found| S2{"Any part\nwith text?"}
+    S2 -->|Found| CLEAN
+    S2 -->|Not found| ERR["Return error object"]
+    CLEAN --> S3["Strip markdown\ncode fences"]
+    S3 --> S4{"JSON.parse\nsucceeds?"}
+    S4 -->|Yes| OK["Return parsed JSON"]
+    S4 -->|No| S5{"Regex extract\n{...} from text?"}
+    S5 -->|Found & valid| OK
+    S5 -->|Failed| ERR
+
+    style OK fill:#1a3a1a,stroke:#4cff4c,color:#e0e0e0
+    style ERR fill:#3a1a1a,stroke:#ff4444,color:#e0e0e0
 ```
 
 ---
@@ -516,26 +561,16 @@ Strategy 5: Return error object with parse failure message
 
 ### Step-by-Step Installation
 
-```
-Step 1    Install Tampermonkey browser extension
-  │
-  ▼
-Step 2    Open Tampermonkey Dashboard → "Create a new script"
-  │
-  ▼
-Step 3    Paste contents of crash-predict-ai.js → Save (Ctrl+S)
-  │
-  ▼
-Step 4    Navigate to supported crash game URL
-  │
-  ▼
-Step 5    Click ⚙ gear icon → Enter Gemini API key → Save
-  │
-  ▼
-Step 6    Wait for minimum rounds to collect (default: 10)
-  │
-  ▼
-  ✓       Predictions begin automatically each betting phase
+```mermaid
+flowchart TD
+    S1["1. Install Tampermonkey\nbrowser extension"] --> S2["2. Open Dashboard →\nCreate a new script"]
+    S2 --> S3["3. Paste crash-predict-ai.js\n→ Save (Ctrl+S)"]
+    S3 --> S4["4. Navigate to supported\ncrash game URL"]
+    S4 --> S5["5. Click ⚙ gear icon →\nEnter Gemini API key → Save"]
+    S5 --> S6["6. Wait for minimum rounds\nto collect (default: 10)"]
+    S6 --> DONE["✓ Predictions begin\nautomatically each betting phase"]
+
+    style DONE fill:#1a3a1a,stroke:#4cff4c,color:#e0e0e0
 ```
 
 ### Supported URLs
@@ -575,36 +610,53 @@ All settings persist in `localStorage` and can be changed via the in-app config 
 
 The UI is a **fixed-position draggable overlay** with the following sections:
 
-```
-┌──────────────────────────────────────────┐
-│  🧠 CRASH PREDICT AI          [⚙] [—] [✕] │  ← Header (draggable)
-├──────────────────────────────────────────┤
-│                                          │
-│              2.09x                       │  ← Live Multiplier
-│           (green/red/gray)               │     (animated during round)
-│                                          │
-├──────────────────────────────────────────┤
-│  ┌────────────────────────────────────┐  │
-│  │     PREDICTED: 1.75x              │  │  ← AI Prediction Box
-│  │           BET                      │  │     (color-coded by advice)
-│  │  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░  68%     │  │  ← Confidence Bar
-│  │  Mean reversion after low streak  │  │  ← Reasoning
-│  │  💰 Suggested cashout: 1.50x      │  │  ← Cashout Hint
-│  └────────────────────────────────────┘  │
-├──────────────────────────────────────────┤
-│  Stored │ AI Acc │ Avg Reward │ Avg Crash│  ← Statistics Grid
-│   156   │  62%   │   1.08     │  2.45x   │
-├──────────────────────────────────────────┤
-│  2.09 1.12 3.45 1.00 5.67 2.33 1.88 ... │  ← Crash History
-│  (color: red < 1.5, orange < 3, green)  │     (last 20 rounds)
-├──────────────────────────────────────────┤
-│  12:34.567  📡 Connected (constructor)   │  ← Event Log
-│  12:34.890  💾 Vector DB ready           │     (scrollable, last 40 entries)
-│  12:35.123  🧠 Calling Gemini...         │
-│  12:36.456  🤖 Pred: 1.75x [68%] → BET  │
-├──────────────────────────────────────────┤
-│  ● Live                         betting  │  ← Status Bar
-└──────────────────────────────────────────┘     (connection + phase)
+```mermaid
+block-beta
+    columns 1
+
+    block:Header:1
+        columns 3
+        title["CRASH PREDICT AI"]:2
+        controls["⚙  —  ✕"]:1
+    end
+
+    block:Multiplier:1
+        mult["Live Multiplier\n2.09x\n(green = growing | red = crashed | gray = waiting)"]
+    end
+
+    block:PredictionBox:1
+        columns 1
+        pred["PREDICTED: 1.75x"]
+        advice["BET"]
+        conf["Confidence ████████████░░░░ 68%"]
+        reason["Reasoning + Suggested Cashout"]
+    end
+
+    block:Stats:1
+        columns 4
+        s1["Stored\n156"]
+        s2["AI Acc\n62%"]
+        s3["Avg Reward\n1.08"]
+        s4["Avg Crash\n2.45x"]
+    end
+
+    block:History:1
+        hist["Crash History — Last 20 Rounds\n🔴 < 1.5x  🟡 < 3.0x  🟢 ≥ 3.0x"]
+    end
+
+    block:Log:1
+        log["Event Log (scrollable, last 40 entries)\n📡 Connected  💾 DB Ready  🧠 Predicting  🤖 Result"]
+    end
+
+    block:StatusBar:1
+        columns 2
+        dot["● Live"]:1
+        phase["betting"]:1
+    end
+
+    style Header fill:#1a1a2e,stroke:#a855f7,color:#e0e0e0
+    style PredictionBox fill:#0a1a0a,stroke:#4cff4c,color:#e0e0e0
+    style Stats fill:#1a1a2e,stroke:#888,color:#e0e0e0
 ```
 
 **Advice Color Coding:**
@@ -659,12 +711,12 @@ window.__predict_destroy();
 
 **Memory Footprint:**
 
-```
-Per stored round:  ~500 bytes (features + metadata)
-1,000 rounds:      ~500 KB
-10,000 rounds:     ~5 MB
-IndexedDB limit:   Browser-dependent (typically 50-80% of disk)
-```
+| Scale | Size | Notes |
+|:---|:---|:---|
+| Per stored round | ~500 bytes | features + metadata |
+| 1,000 rounds | ~500 KB | — |
+| 10,000 rounds | ~5 MB | — |
+| IndexedDB limit | Browser-dependent | Typically 50-80% of available disk |
 
 ---
 
@@ -690,27 +742,25 @@ IndexedDB limit:   Browser-dependent (typically 50-80% of disk)
 
 ### Why KNN + LLM Hybrid Instead of LLM-Only?
 
-```
-  LLM-Only                    KNN-Only                   KNN + LLM (This Project)
-  ─────────                   ─────────                  ─────────────────────────
-  ✗ No grounding              ✗ No reasoning             ✓ Grounded reasoning
-  ✗ Hallucination risk        ✗ Just returns numbers     ✓ Evidence-backed analysis
-  ✓ Flexible reasoning        ✓ Fast, deterministic      ✓ Best of both worlds
-  ✗ No historical context     ✗ Can't explain "why"      ✓ Contextual predictions
-```
+| Capability | LLM-Only | KNN-Only | KNN + LLM (This Project) |
+|:---|:---:|:---:|:---:|
+| Grounded in real data | No | Yes | **Yes** |
+| Can reason & explain | Yes | No | **Yes** |
+| Low hallucination risk | No | Yes | **Yes** |
+| Historical context | No | Yes | **Yes** |
+| Flexible reasoning | Yes | No | **Yes** |
+| Fast & deterministic | No | Yes | **Yes** (KNN) + LLM |
 
 ### Why Exponential Time Decay?
 
-```
-  Hours Old    Decay Factor    Effective Weight
-  ─────────    ────────────    ────────────────
-     0            1.000        ████████████████████  100%
-     1            0.607        ████████████          61%
-     2            0.368        ███████               37%
-     4            0.135        ███                   14%
-     8            0.018        ▓                      2%
-    12            0.002        ░                      0.2%
-```
+| Hours Old | Decay Factor | Effective Weight |
+|:---:|:---:|:---|
+| 0 | 1.000 | `████████████████████` 100% |
+| 1 | 0.607 | `████████████` 61% |
+| 2 | 0.368 | `███████` 37% |
+| 4 | 0.135 | `███` 14% |
+| 8 | 0.018 | `▓` 2% |
+| 12 | 0.002 | `░` 0.2% |
 
 Recent rounds reflect current game server dynamics. Data older than ~6 hours has minimal influence, preventing stale patterns from dominating predictions.
 
